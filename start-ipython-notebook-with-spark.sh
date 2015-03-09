@@ -43,6 +43,8 @@ function stop() {
         else
 			echo -e "ipython notebook server with spark is not running ..."
 		fi
+	else
+		echo "Not found the PID file: IPYTHON_NOTEBOOK_SERVER_WITH_SPARK_PID.txt"
     fi
 }
 
