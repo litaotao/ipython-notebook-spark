@@ -56,19 +56,19 @@ function print_log() {
 }
 
 case "${1}" in
-  start)
-    start
-    ;;
-  stop)
-    stop
-    ;;
-  restart)
-    stop
-    start
-    ;;
-  status)
-    print_log
-    ;;
-  *)
-    echo "Usage: $0 {start|stop|restart|status}"
+	start)
+		start
+	;;
+	stop)
+		stop
+	;;
+	restart)
+		stop
+		start
+	;;
+	status)
+		print_log
+	;;
+	*)
+	echo "Usage: $0 {start|stop|restart|status}"
 esac
