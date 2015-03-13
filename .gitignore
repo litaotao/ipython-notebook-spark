@@ -1,0 +1,5 @@
+# 此为注释 – 将被 Git 忽略
+# 忽略所有 .csv,.pynb, 结尾的和日志文件
+*.csv
+*.ipynb
+notebook*.txt
