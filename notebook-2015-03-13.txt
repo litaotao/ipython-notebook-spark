@@ -1,9 +1,0 @@
-2015-03-13 16:27:42.263 [NotebookApp] Using existing profile dir: u'/root/.config/ipython/profile_pyspark'
-2015-03-13 16:27:42.273 [NotebookApp] Using MathJax from CDN: http://cdn.mathjax.org/mathjax/latest/MathJax.js
-2015-03-13 16:27:42.283 [NotebookApp] CRITICAL | WARNING: The notebook server is listening on all IP addresses and not using encryption. This is not recommended.
-2015-03-13 16:27:42.284 [NotebookApp] Serving notebooks from local directory: /root/Desktop/ipython-notebook-spark
-2015-03-13 16:27:42.284 [NotebookApp] The IPython Notebook is running at: http://[all ip addresses on your system]:8880/
-2015-03-13 16:27:42.284 [NotebookApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
-2015-03-13 16:27:42.541 [NotebookApp] WARNING | Couldn't authenticate WebSocket connection
-2015-03-13 16:27:42.544 [NotebookApp] WARNING | Couldn't authenticate WebSocket connection
-2015-03-13 16:27:42.551 [NotebookApp] WARNING | Couldn't authenticate WebSocket connection
