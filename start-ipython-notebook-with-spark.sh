@@ -46,6 +46,7 @@ function stop() {
 	else
 		echo "Not found the PID file: IPYTHON_NOTEBOOK_SERVER_WITH_SPARK_PID.txt"
     fi
+	sleep 5
 }
 
 function print_log() {
