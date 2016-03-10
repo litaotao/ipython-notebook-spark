@@ -1,38 +1,30 @@
+
 # ipython-notebook-spark
 
-##  
+## `build your spark application in ipython`
+  
 ## 1. 致谢   
-　　首先我忠心地感谢Ipython，Spark的开源作者，真心谢谢你们开发这么方便，好用，功能强大的项目，而且还无私地奉献给大众使用。刚刚很轻松地搭建了一个机遇Ipython Notebook的Spark客户端，真的感受到 The power of technology, the power of open source.  
-　　下面是这两个项目的github地址：  
+首先我忠心地感谢Ipython，Spark的开源作者，真心谢谢你们开发这么方便，好用，功能强大的项目，而且还无私地奉献给大众使用。刚刚很轻松地搭建了一个机遇Ipython Notebook的Spark客户端，真的感受到 The power of technology, the power of open source.  
+下面是这两个项目的github地址：  
 
 - [Ipython](https://github.com/ipython/ipython)  
 - [Spark](https://github.com/apache/spark)  
 
-　　同时，这篇文章在刚开始的部分，参考了很多 [这篇博客](http://blog.cloudera.com/blog/2014/08/how-to-use-ipython-notebook-with-apache-spark/)的内容，感谢这么多人能无私分享如此高质量的内容。   
-　　但是，这篇文章不是简单记录怎么做，我尽量做到量少质高，所以有些地方会说得比较详细，其中也会提到在解决遇到的问题上的一些方法和思路。
+同时，这篇文章在刚开始的部分，参考了很多 [这篇博客](http://blog.cloudera.com/blog/2014/08/how-to-use-ipython-notebook-with-apache-spark/)的内容，感谢这么多人能无私分享如此高质量的内容。   
+但是，这篇文章不是简单记录怎么做，我尽量做到量少质高，所以有些地方会说得比较详细，其中也会提到在解决遇到的问题上的一些方法和思路。
 
-## 2. 路线规划   
-　　基于 [Databricks](http://www.databricks.com/)，[Zeppelin](zeppelin-project.org) 和 [Hue](www.gethue.com) 的启发，我也想尝试搭建一个丰富可用的在线大数据REPL分析平台，正好用此机会好好实践一下spark，毕竟都学习spark几个月了呢。   
-　　不说废话，同[使用spark分析微博数据那篇博文一样](http://litaotao.github.io/weibo-api-in-action)，我们也要有一个路线规划：  
+## 2. 原理
 
-- 搭建一个可多用户使用的，底层接入了spark集群的Ipython Notebook Server；  
-- 完善 Weibo Message Driver，使用户可在Notebook里获取、分析微博数据，as simple as possible；  
-- 研究Zeppelin和Hue项目，把其中一个嫁接在Notebook的上层，实现准产品级的大数据实时ETL，Analytic，Sharing平台；这一步可能需要较长时间，可根据自己的时间安排灵活调整；  
-
-　　Dream：在年前完成上面三步，that's really full or chanllenge, but more funny. **Anyway, we need dreams, and I can't wait to make this dream into reality.**
-
-![dreams](http://litaotao.github.io/images/dreams.jpg)
-
-　　这篇主要记录我在实现第一步的过程中遇到的主要步骤，遇到的问题和解决方法：搭建一个可多用户使用的，底层接入了spark集群的Ipython Notebook Server。
+Ipython 支持自定义的配置文件，而且配置文件可以极其灵活的定义，具体我们来看如何创建一个配置文件，并且指定一个配置文件启动 ipython。
 
 ## 3. 配置Ipython  
 
-### 3.1: ipython 配置名profile介绍 
+### 3.1 ipython 配置名profile介绍
 - profile 命令说明    
 
 　　profile是ipython的一个子命令，其中profile又有两个子命令，分别是create和list，顾名思义，create就是创建一个配置文件，list就是列出当前配置文件。如下：  
 
-    root@ubuntu2[13:54:01]:~/Desktop#ipython profile 
+    root@ubuntu2[13:54:01]:~/Desktop#ipython profile
     No subcommand specified. Must specify one of: ['create', 'list']
 
     Manage IPython profiles
@@ -108,50 +100,44 @@
     [ProfileCreate] Generating default config file: u'/root/.config/ipython/profile_pytest/ipython_notebook_config.py'
 
     root@ubuntu2[15:00:57]:~/Desktop#ls ~/.config/ipython/profile_pytest/
-    ipython_config.py  ipython_notebook_config.py  log  pid  security  startup 
+    ipython_config.py  ipython_notebook_config.py  log  pid  security  startup
 
 ### 3.3 编辑配置文件
 - 编辑ipython_notebook_config.py   
 
+需要更改的只有下面三项：
+
+- `c.NotebookApp.ip`: 启动服务的地址，设置成 '*' 可以从同一网段的其他机器访问到；
+- `c.NotebookApp.open_browser`: 设置成 'False'，表示启动 ipython notebook 的时候不会自动打开浏览器；
+- `c.NotebookApp.password`: 设置 ipython notebook 的登陆密码，怎么设置看下面；
+
 ```
-    c = get_config()
-    
-    # about line 15, the ip address the notebook server will listen on. Set it to * means that any IP/Machine which can connect to the server can connect to the notebook server.
     c.NotebookApp.ip = '*'
-    # about line 37, whether to open a browser or not. cause what we want to build is a backend server, so we set it False, no need to open a browser.
-    c.NotebookApp.open_browser = False
-    # about line 54, the port which the notebook server will listen on
-    c.NotebookApp.port = 8880 # or whatever you want, make sure the port is available  
+    c.NotebookApp.open_browser = False    
+    c.NotebookApp.password = "sha1:c6b748a8e1e2:4688f91ccfb9a8e0afd041ec77cdda99d0e1fb8f"
 ```
 
 - 设置访问密码   
-　　如果你的notebook server是需要访问控制的，简单的话可以设置一个访问密码。听说Ipython 2.x 版本有用户访问控制，这里我还没有接触过，晚点会看看是否有成熟的可用的用户控制方案。
+　　如果你的notebook server是需要访问控制的，简单的话可以设置一个访问密码。
 
-    + 生成密码文件  
-    这里我们用python自带的密码包生成一个密码，然后再把这个密码重定向到nvpasswd.txt文件里。注意这里重定向的路径哦。
-    + 编辑配置文件，设置读取密码文件配置项
-    这里有一个需要注意的，就是PWDFILE的设置，一开始我设置为 `~/.config/ipython/profile_pytest/nbpasswd.txt`，但是启动ipython notebook server的时候老师报错，说找不到密码文件nbpasswd.txt，很奇怪，明明文件就是在的，可就是提示找不到。无奈我到nbpasswd.txt路径下用 pwd 打印当前路径，显示为 `root/.config/ipython/profile_pytest/nbpasswd.txt`，可是这两个路径应该是一样的啊。无奈之下，死马当作活马医，我就把PWDFILE设置成为 `root/.config/ipython/profile_pytest/nbpasswd.txt`，没想到这样还成功了。关于这点为什么会有效，目前我还不是很清楚，等我请教了公司大神后再补上这一个tip吧。
-      
-    示例如下：  
+    + 生成密码
+    ```
+    In [4]: from IPython.lib import passwd
 
-```
-root@ubuntu2[09:40:29]:~/Desktop#python -c 'from IPython.lib import passwd; print passwd()' > ~/.config/ipython/profile_pytest/nbpasswd.txt
-Enter password: 
-Verify password: 
-root@ubuntu2[09:43:35]:~/Desktop#vi /root/.config/ipython/profile_pytest/nbpasswd.txt 
-sha1:c6b748a8e1e2:4688f91ccfb9a8e0afd041ec77cdda99d0e1fb8f  
+    In [5]: passwd()
+    Enter password:
+    Verify password:
+    Out[5]: 'sha1:e819609871c8:1039dbc5a1392fc230d371d1ce19511490978685'
 
-root@ubuntu2[09:49:09]:~/Desktop#vi /root/.config/ipython/profile_pytest/ipython_notebook_config.py 
-# about line 95
-PWDFILE='root/.config/ipython/profile_pytest/nbpasswd.txt'
-c.NotebookApp.password = open(PWDFILE).read().strip()
-```
+    In [6]:
+    ```
+    + 编辑配置文件，设置密码：`c.NotebookApp.password = "sha1:c6b748a8e1e2:4688f91ccfb9a8e0afd041ec77cdda99d0e1fb8f"`
 
 - 设置启动文件  
 　　这一步算是比较重要的了，也是我在配置这个notebook server中遇到的比较难解的问题。这里我们首先需要创建一个启动文件，并在启动文件里设置一些spark的启动参数。如下：
 
 ```
-root@ubuntu2[09:52:14]:~/Desktop#touch ~/.config/ipython/profile_pytest/startup/00-pytest-setup.py 
+root@ubuntu2[09:52:14]:~/Desktop#touch ~/.config/ipython/profile_pytest/startup/00-pytest-setup.py
 root@ubuntu2[10:08:44]:~/Desktop#vi ~/.config/ipython/profile_pytest/startup/00-pytest-setup.py   
 
 import os
@@ -161,7 +147,7 @@ spark_home = os.environ.get('SPARK_HOME', None)
 if not spark_home:
     raise ValueError('SPARK_HOME environment variable is not set')
 sys.path.insert(0, os.path.join(spark_home, 'python'))
-sys.path.insert(0, os.path.join(spark_home, 'python/lib/py4j-0.8.1-src.zip'))
+sys.path.insert(0, os.path.join(spark_home, 'python/lib/py4j-0.8.2.1-src.zip'))
 # execfile(os.path.join(spark_home, 'python/pyspark/shell.py'))
 ```
 
@@ -181,7 +167,7 @@ atexit.register(lambda: sc.stop())
 ```
 # for the CDH-installed Spark
 export SPARK_HOME='/usr/local/spark-1.2.0-bin-cdh4/'
- 
+
 # this is where you specify all the options you wou
 ld normally add after bin/pyspark
   export PYSPARK_SUBMIT_ARGS='--master spark://10.21.208.21:7077 --deploy-mode client'
@@ -217,5 +203,5 @@ export PYSPARK_SUBMIT_ARGS="--master spark://10.21.208.21:7077 --deploy-mode cli
     + ipython profile create pyspark
     + 编辑ipython_notebook_config.py   
     + [可选]配置ipython notebook登录密码
-    + 设置启动文件 
+    + 设置启动文件
 - 设置启动脚本    
